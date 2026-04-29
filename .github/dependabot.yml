@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # Go
+  - package-ecosystem: "gomod"
+    directories:
+      - "/operator"
+      - "/services/dbaas-adapter"
+      - "/services/service"
+    schedule:
+      interval: "weekly"
+    groups:
+      monorepo-dependencies:
+        group-by: dependency-name
+
+  # Docker images
+  - package-ecosystem: "docker"
+    directories:
+      - "/test"
+      - "/operator"
+      - "/services/backup-daemon"
+      - "/services/dbaas-adapter"
+      - "/services/service"
+      - "/services/test"
+    schedule:
+      interval: "weekly"
+    groups:
+      monorepo-dependencies:
+        group-by: dependency-name
