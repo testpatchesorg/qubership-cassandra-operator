@@ -17,9 +17,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.22.0
 )
 
-// replace github.com/Netcracker/qubership-nosqldb-operator-core => ../nosqldb-operator-core
-
-// replace git.netcracker.com/PROD.Platform.Databases/base/cql => ../cassandra-operator/cql
 
 require (
 	github.com/armon/go-metrics v0.4.1 // indirect

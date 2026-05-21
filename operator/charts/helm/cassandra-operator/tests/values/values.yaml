@@ -1,4 +1,4 @@
-operatorImage: artifactorycn.qubership.org:17008/product/prod.platform.databases_cassandra:master_latest_operator
+operatorImage: cassandra_operator_mage:master_latest_operator
 cassandra:
   replicas: 3
   dockerImage: "dummy"
