@@ -85,7 +85,7 @@ Get Pod Name For Deployment
     [Arguments]  ${deployment}
     @{pods}=  Get Pod Names For Deployment Entity  ${deployment}  ${CASSANDRA_NAMESPACE}
     ${pod_name}  Set Variable  ${pods}[0]
-    [Return]  ${pod_name}
+    RETURN  ${pod_name}
 
 Check Backup Exists Using Baskup-daemon Pod
     [Arguments]  ${backup_daemon_pod}  ${backup}
@@ -99,4 +99,4 @@ Check Pod Status Is Running
 
 Fetch Cassandra Version
     ${version}=  Get Cassandra Version
-    [Return]  ${version}
+    RETURN  ${version}

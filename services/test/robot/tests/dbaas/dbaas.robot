@@ -34,7 +34,7 @@ Backup Data And Check
     ${backupId}=  Set Variable  ${resultjson['trackId']}
     ${response}=  Wait For /api/${dbaas_api_version}/dbaas/adapter/cassandra/backups/track/backup/${backupId} Job Completion With ${attempts} Attempts
     Should Be Equal As Strings  ${response.status_code}  200
-    [Return]  ${backupId}
+    RETURN  ${backupId}
 
 Restore Data And Check
     [Arguments]  ${document}  ${backupId}  ${attempts}
@@ -53,7 +53,7 @@ Restore Data With Regenerate Names
     ${restoreId}=  Set Variable  ${resultjson['trackId']}
     ${response}=  Wait For /api/${dbaas_api_version}/dbaas/adapter/cassandra/backups/track/restore/${restoreId} Job Completion With ${attempts} Attempts
     Should Be Equal As Strings  ${response.status_code}  200
-    [Return]  ${resultjson}
+    RETURN  ${resultjson}
 
 Check Roles Existence In Response
     [Arguments]  ${resp}
@@ -92,7 +92,7 @@ Create Keyspace And Return Users Names
     Check Roles Existence In Response  ${resp}
     ${resp_con_properties}=  Get From Dictionary  ${resp.json()}  connectionProperties
     ${db_users}=  Get Multiple Users Name  ${resp_con_properties}
-    [Return]  ${db_users}
+    RETURN  ${db_users}
 
 Check Users Permissions
     [Arguments]  ${cassandra_version}  ${db_users}
@@ -112,7 +112,7 @@ Get Expected Permissions
     ...    Create List    CREATE    ALTER    DROP    SELECT    MODIFY    AUTHORIZE    UNMASK    SELECT_MASKED
     ...    ELSE
     ...    Create List    CREATE    ALTER    DROP    SELECT    MODIFY    AUTHORIZE
-    [Return]  ${permissions}
+    RETURN  ${permissions}
 
 Delete Dbaas Users
     [Arguments]  ${db_users}

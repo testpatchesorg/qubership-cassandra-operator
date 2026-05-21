@@ -57,8 +57,8 @@ Get Dbaas Aggregator version
     ELSE
         ${apiVersion}=    Set Variable    v2
     END
-    
-    [Return]    ${apiVersion}
+
+    RETURN    ${apiVersion}
  
 Prepare Configuration For Dbaas Connection
     ${verify}=    Get Environment Variable    name=TLS_ROOTCERT    default=False
@@ -73,7 +73,7 @@ Prepare Configuration For Dbaas Connection
     ...  ELSE
     ...  Set Variable  http  8080  False
     log to console  PORT, PROTOCOL and VERIFY for DBAAS Connection: ${connection_settings[0]} ${connection_settings[1]} ${connection_settings[2]}
-    [Return]  @{connection_settings}
+    RETURN  @{connection_settings}
 
 
 Get Request To ${point}
@@ -85,7 +85,7 @@ Get Request To ${point}
     Log  ${resp.status_code}
     Log  ${resp.content}
 
-    [Return]  ${resp}
+    RETURN  ${resp}
 
 Post Request With ${doc} Data To ${point}
     ${heads}=  Set Variable  ${headers}
@@ -98,7 +98,7 @@ Post Request With ${doc} Data To ${point}
     Log  ${resp.status_code}
     Log  ${resp.content}
 
-    [Return]  ${resp}
+    RETURN  ${resp}
 
 Put Request With ${doc} Data To ${point}
     ${heads}=  Set Variable  ${headers}
@@ -109,7 +109,7 @@ Put Request With ${doc} Data To ${point}
     Log  ${resp.status_code}
     Log  ${resp.content}
 
-    [Return]  ${resp}
+    RETURN  ${resp}
 
 Check ${col} In ${keyspace} ${table}
     Log  ${col}
@@ -136,4 +136,4 @@ Wait For ${job} Job Completion With ${attempts} Attempts
     END
     Log  ${resp}
     Log  ${resp.content}
-    [Return]  ${resp}
+    RETURN  ${resp}

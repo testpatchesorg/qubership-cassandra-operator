@@ -56,7 +56,7 @@ Wait For ${job} Job Completion With ${attempts} Attempts
     END
     Log  ${resp}
     Log  ${resp.content}
-    [Return]  ${resp}
+    RETURN  ${resp}
 
 Run Job To Endpoint And Check
     [Arguments]  ${doc}  ${point}  ${attempts}  ${post_status_code}  ${get_status_code}
@@ -76,17 +76,17 @@ Run Job To Endpoint And Check
     ${status_code}=  Set Variable  ${resp.status_code}
     Set Suite Variable  ${status_code}
     Should Be Equal As Strings  ${resp.status_code}  ${get_status_code}
-    [Return]  ${currbackupjob}
+    RETURN  ${currbackupjob}
 
 Backup Data And Check
     [Arguments]  ${doc}  ${attempts}  ${post_status_code}=200  ${get_status_code}=200
     ${job}=  Run Job To Endpoint And Check  ${doc}  /backup  ${attempts}  ${post_status_code}  ${get_status_code}
-    [Return]  ${job}
+    RETURN  ${job}
 
 Restore Data And Check
     [Arguments]  ${doc}  ${attempts}  ${post_status_code}=200  ${get_status_code}=200
     ${job}=  Run Job To Endpoint And Check  ${doc}  /restore  ${attempts}  ${post_status_code}  ${get_status_code}
-    [Return]  ${job}
+    RETURN  ${job}
 
 Delete Backup
     [Arguments]  ${backupjob}
