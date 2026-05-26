@@ -1,9 +1,14 @@
 import os
+import time
 from ssl import CERT_REQUIRED, PROTOCOL_TLSv1_2, SSLContext
 
 from cassandra import ConsistencyLevel
 from cassandra.auth import PlainTextAuthProvider
 from cassandra.cluster import Cluster, ExecutionProfile, EXEC_PROFILE_DEFAULT
+from cassandra import OperationTimedOut
+from cassandra.cluster import NoHostAvailable
+from cassandra.cluster import NoConnectionsAvailable
+
 
 CASSANDRA_DIR = "/var/lib/cassandra"
 
@@ -40,13 +45,24 @@ class CassandraClient(object):
             ssl_context=ssl_context, connect_timeout=self.connect_timeout, protocol_version=5)
         self.session = self.cluster.connect()
 
-    def execute_query(self, query):
-        try:
-            rows = self.session.execute(query)
-            return rows
-        except Exception as e:
-            print(f"Failed to execute the query: {query}, error is: {e}")
-            raise e
+    def execute_query(self, query, retries=3, retry_delay=5):
+        last_exc = None
+        for attempt in range(retries):
+            try:
+                rows = self.session.execute(query)
+                return rows
+            except (OperationTimedOut, NoHostAvailable, NoConnectionsAvailable) as e:
+                last_exc = e
+                print(f"Transient error on attempt {attempt + 1}/{retries} "
+                      f"for query: {query}, error: {e}. Retrying in {retry_delay}s...")
+                if attempt < retries - 1:
+                  print(f"Retrying in {retry_delay} seconds...")
+                  time.sleep(retry_delay)
+            except Exception as e:
+                print(f"Failed to execute the query: {query}, error is: {e}")
+                raise e
+        print(f"Failed after {retries} attempts: {query}, last error: {last_exc}")
+        raise last_exc
 
     def drop_keyspace(self, keyspace_name):
         self.execute_query(f"drop keyspace if exists {keyspace_name}")
