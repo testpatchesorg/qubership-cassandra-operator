@@ -78,10 +78,9 @@ jobs:
           # shellcheck disable=2129
           CASSANDRA_MAJOR_MINOR_VERSION=$(echo ${CASSANDRA_VERSION} | cut -d. -f1,2)
           # echo "CASSANDRA_MAJOR_MINOR_VERSION=${CASSANDRA_MAJOR_MINOR_VERSION}" >> $GITHUB_OUTPUT
-          DOCKER_CONFIG=$(jq --argjson name "docker-cassandra_${CASSANDRA_MAJOR_MINOR_VERSION}" \
-          '.components[] | select(.name == $name)' $DOCKER_CONFIG_FILE)
+          DOCKER_CONFIG=$(jq -c --arg name "docker-cassandra_${CASSANDRA_MAJOR_MINOR_VERSION}" '.components[] | select(.name == $name)' $DOCKER_CONFIG_FILE)
           echo "DOCKER_CONFIG=${DOCKER_CONFIG}" >> $GITHUB_OUTPUT
-          PLATFORMS=$(jq -r '.platforms' $DOCKER_CONFIG_FILE)
+          PLATFORMS=$(jq -c '.platforms' $DOCKER_CONFIG_FILE)
           echo "PLATFORMS=${PLATFORMS}" >> $GITHUB_OUTPUT
 
       - name: Docker
