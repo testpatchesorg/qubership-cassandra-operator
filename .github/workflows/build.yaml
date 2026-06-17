@@ -30,6 +30,16 @@ on:
         type: boolean
         default: false
         required: false
+      tags:
+        description: "Extra tags for images"
+        type: string
+        required: false
+        default: ""
+      replace-symbol:
+        description: "Symbol to replace in tags"
+        type: string
+        required: false
+        default: "_"
 
 permissions:
   contents: read
@@ -119,8 +129,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${GITHUB_ACTOR}
-          password: ${{secrets.GITHUB_TOKEN}}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Prepare Tag
         run: echo "TAG_NAME=$(echo ${TAG_NAME} | sed 's@refs/tags/@@;s@refs/heads/@@;s@/@_@g')" >> $GITHUB_ENV
       - name: Get package IDs for delete
@@ -129,7 +139,7 @@ jobs:
         with:
           component-name: ${{ matrix.component.name }}
           component-tag: ${{ env.TAG_NAME }}
-          access-token: ${{secrets.GITHUB_TOKEN}}
+          access-token: ${{ secrets.GITHUB_TOKEN }}
         if: ${{ env.PUSH }}
       - name: Build and push
         uses: docker/build-push-action@16ebe778df0e7752d2cfcbd924afdbbd89c1a755 # v6.6.1

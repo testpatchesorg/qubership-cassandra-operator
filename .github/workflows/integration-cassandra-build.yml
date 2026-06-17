@@ -1,0 +1,102 @@
+name: Build Patched Cassandra Image
+run-name: "Build Patched Cassandra ${{ github.event.client_payload.cassandra-version }} Image"
+on:
+  repository_dispatch:
+    types: [cassandra-patched-build]
+
+permissions:
+  contents: read
+
+env:
+  CASSANDRA_DISTRO_URL: ${{ github.event.client_payload.cassandra-distro-url }}
+  # CASSANDRA_MAJOR_VERSION: ${{ github.event.client_payload.cassandra-major-version }}
+  CASSANDRA_VERSION: ${{ github.event.client_payload.cassandra-version }}
+  DOCKER_CONFIG_FILE: ".github/build-config.cfg"
+  INTEGRATION_BUILD_BRANCH: "feature/integration-build-${{ github.event.client_payload.cassandra-version }}"
+  REPLACE_SYMBOL: ${{ github.event.client_payload.replace-symbol }}
+  TAG_NAME: ${{ github.event.client_payload.tag || github.ref_name }}
+  TARGET_REF: ${{ github.event.client_payload.target-ref || github.ref }}
+
+jobs:
+  build:
+    permissions:
+        contents: write
+        packages: write
+    name: "Prepare Images and Metadata"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Show payload
+        env:
+          PAYLOADS: ${{ toJson(github.event.client_payload) }}
+        run: |
+          echo "${PAYLOADS}"
+
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.TARGET_REF }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Prepare ${{ env.INTEGRATION_BUILD_BRANCH }}
+        run: |
+          git fetch origin
+          if git show-ref --verify --quiet refs/heads/${INTEGRATION_BUILD_BRANCH}; then
+            git checkout ${INTEGRATION_BUILD_BRANCH}
+            git reset --hard origin/${TARGET_REF}
+          else
+            git checkout -b ${INTEGRATION_BUILD_BRANCH} origin/${TARGET_REF}
+          fi
+          git pull
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+          echo "$(date): [IBuild] Updated ${INTEGRATION_BUILD_BRANCH} by ${TARGET_REF} to build qubership-cassandra images with patched cassandra from ${CASSANDRA_DISTRO_URL}" >> patched-build.log
+
+          git add .
+          git commit -m "[IBuild] Updated ${INTEGRATION_BUILD_BRANCH} by ${TARGET_REF} to build qubership-cassandra images with patched cassandra from ${CASSANDRA_DISTRO_URL}"
+          git push -f -u origin "${INTEGRATION_BUILD_BRANCH}"
+
+      - name: Create tags for images
+        uses: netcracker/qubership-workflow-hub/actions/metadata-action@8c6dbeb901920bae9f40d7d7b646d8d9127e1ce7  # v2.4.0
+        id: meta
+        with:
+          default-template: "{{ref-name}}"
+          default-tag: ''
+          ref: ${{ env.INTEGRATION_BUILD_BRANCH }}
+          extra-tags: ${{ env.TAG_NAME }}
+          replace-symbol: ${{ env.REPLACE_SYMBOL }}
+
+      - name: Set environment variables
+        id: set-vars
+        # shellcheck disable=2129
+        run: |
+          # shellcheck disable=2129
+          CASSANDRA_MAJOR_MINOR_VERSION=$(echo ${CASSANDRA_VERSION} | cut -d. -f1,2)
+          # echo "CASSANDRA_MAJOR_MINOR_VERSION=${CASSANDRA_MAJOR_MINOR_VERSION}" >> $GITHUB_OUTPUT
+          DOCKER_CONFIG=$(jq --arg name "docker-cassandra_${CASSANDRA_MAJOR_MINOR_VERSION}" \
+          '.components[] | select(.name == $name)' $DOCKER_CONFIG_FILE)
+          echo "DOCKER_CONFIG=${DOCKER_CONFIG}" >> $GITHUB_OUTPUT
+          PLATFORMS=$(jq -r '.platforms | join(",")' $DOCKER_CONFIG_FILE)
+          echo "PLATFORMS=${PLATFORMS}" >> $GITHUB_OUTPUT
+
+      - name: Docker
+        uses: netcracker/qubership-workflow-hub/actions/docker-action@8c6dbeb901920bae9f40d7d7b646d8d9127e1ce7  # v2.4.0
+        with:
+          build-args: |
+            version=${{ fromJson(steps.set-vars.outputs.DOCKER_CONFIG).build_args.version }}
+            exp_version=${{ fromJson(steps.set-vars.outputs.DOCKER_CONFIG).build_args.exp_version }}
+            dist_url=${{ env.CASSANDRA_DISTRO_URL }}
+          checkout: false
+          component: ${{ steps.set-vars.outputs.DOCKER_CONFIG }}
+          download-artifact: false
+          platforms: ${{ steps.set-vars.outputs.PLATFORMS }}
+          ref: ${{ env.INTEGRATION_BUILD_BRANCH }}
+          tags: ${{ steps.meta.outputs.result }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
