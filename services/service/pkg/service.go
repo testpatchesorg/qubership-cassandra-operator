@@ -1,12 +1,12 @@
 package pkg
 
 import (
-	"github.com/Netcracker/qubership-cql-driver"
 	v1 "github.com/Netcracker/qubership-cassandra-supplementary/api/v1alpha1"
 	"github.com/Netcracker/qubership-cassandra-supplementary/pkg/backup"
 	"github.com/Netcracker/qubership-cassandra-supplementary/pkg/dbaas"
 	"github.com/Netcracker/qubership-cassandra-supplementary/pkg/robotTests"
 	"github.com/Netcracker/qubership-cassandra-supplementary/pkg/utils"
+	cql "github.com/Netcracker/qubership-cql-driver"
 	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/constants"
 	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/core"
 	"go.uber.org/zap"
@@ -99,17 +99,6 @@ func (r *PreDeployBuilder) Build(ctx core.ExecutionContext) core.Executable {
 		Client:   client,
 	}
 	ctx.Set(utils.KubernetesHelperImpl, defaultUtilsHelper)
-
-	if !ctx.Get(constants.ContextSpecHasChanges).(bool) {
-		if spec.Spec.VaultRegistration.Enabled {
-			// TODO vault
-			// compound.AddStep(&steps.SetPasswordFromVaultRole{
-			// 	Registration:          spec.Spec.VaultRegistration,
-			// 	RoleName:              spec.Spec.VaultDBEngine.Role,
-			// 	CtxVarToStorePassword: utils.ContextPasswordKey,
-			// })
-		}
-	}
 
 	return compound
 }

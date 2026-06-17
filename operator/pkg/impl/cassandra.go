@@ -86,16 +86,7 @@ func (r *CassandraBuilder) Build(ctx core.ExecutionContext) core.Executable {
 			}
 			log.Warn("Cassandra secret doesn't exist!")
 		} else {
-			// If secret exists select the strategy to save password to context
-			if !spec.Spec.VaultRegistration.Enabled {
-				compound.AddStep(&common.SetPasswordFromSecret{})
-			} else {
-				compound.AddStep(&steps.SetPasswordFromVaultRole{
-					Registration:          spec.Spec.VaultRegistration,
-					RoleName:              spec.Spec.VaultDBEngine.Role,
-					CtxVarToStorePassword: utils.ContextPasswordKey,
-				})
-			}
+			compound.AddStep(&common.SetPasswordFromSecret{})
 		}
 
 		compound.AddStep(&common.InitialValidations{})
@@ -144,13 +135,6 @@ func (r *PreDeployCassandraBuilder) Build(ctx core.ExecutionContext) core.Execut
 	}
 
 	if !ctx.Get(constants.ContextSpecHasChanges).(bool) {
-		if spec.Spec.VaultRegistration.Enabled {
-			compound.AddStep(&steps.SetPasswordFromVaultRole{
-				Registration:          spec.Spec.VaultRegistration,
-				RoleName:              spec.Spec.VaultDBEngine.Role,
-				CtxVarToStorePassword: utils.ContextPasswordKey,
-			})
-		}
 		compound.AddStep(&common.RunFiberServer{})
 	}
 

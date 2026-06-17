@@ -113,8 +113,6 @@ type CassandraSpec struct {
 	Reaper                     Reaper                 `json:"reaper,omitempty" common:"true"`
 	TLS                        TLS                    `json:"tls,omitempty" common:"true"`
 	Cassandra                  `json:"cassandra"`
-	VaultDBEngine              `json:"vaultDBEngine"  common:"true"`
-	VaultRegistration          types.VaultRegistration                    `json:"vaultRegistration" common:"true"`
 	ServiceAccountName         string                                     `json:"serviceAccountName"`
 	IpV6                       bool                                       `json:"ipV6,omitempty"`
 	StopOnFailedResourceUpdate bool                                       `json:"stopOnFailedResourceUpdate,omitempty"`
@@ -168,16 +166,6 @@ type Reaper struct {
 
 type Policies struct {
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
-}
-
-type VaultDBEngine struct {
-	Enabled         bool   `json:"enabled"`
-	Name            string `json:"name,omitempty"`
-	Role            string `json:"role,omitempty"`
-	PluginName      string `json:"pluginName,omitempty"`
-	ProtocolVersion int    `json:"protocolVersion,omitempty"`
-	AllowedRoles    string `json:"allowedRoles,omitempty"`
-	ConnectTimeout  string `json:"connectTimeout,omitempty"`
 }
 
 type TLS struct {

@@ -89,12 +89,7 @@ func (r *DbaasDeployment) Execute(ctx core.ExecutionContext) error {
 		coreUtils.GetPlainTextEnvVar("PORT", fmt.Sprint(utils.GetHTTPPort(tlsEnabled))),
 		coreUtils.GetPlainTextEnvVar("GOCQL_TIMEOUT", fmt.Sprint(spec.Spec.GocqlTimeout)),
 		coreUtils.GetPlainTextEnvVar("GOCQL_CONNECT_TIMEOUT", fmt.Sprint(spec.Spec.GocqlConnectTimeout)),
-		coreUtils.GetPlainTextEnvVar("VAULT_ENABLED", strconv.FormatBool(spec.Spec.VaultRegistration.Enabled)),
 		coreUtils.GetPlainTextEnvVar("CLOUD_PUBLIC_HOST", os.Getenv("CLOUD_PUBLIC_HOST")),
-		coreUtils.GetPlainTextEnvVar("VAULT_AUTH_METHOD", spec.Spec.VaultRegistration.Method),
-		coreUtils.GetPlainTextEnvVar("VAULT_ENV_PASSTHROUGH", "VAULT_ADDR,VAULT_ROLE,VAULT_AUTH_METHOD,VAULT_ENABLED"),
-		coreUtils.GetPlainTextEnvVar("VAULT_ROTATION_PERIOD", strconv.Itoa(spec.Spec.VaultRegistration.RotationPeriod)),
-		coreUtils.GetPlainTextEnvVar("VAULT_DB_ENGINE_NAME", "cassandra-db-engine"), // TODO hardcoded
 		coreUtils.GetPlainTextEnvVar("API_VERSION", dbaas.ApiVersion),
 		coreUtils.GetPlainTextEnvVar("MULTI_USERS_ENABLED", strconv.FormatBool(dbaas.MultiUsers)),
 		coreUtils.GetPlainTextEnvVar("CASSANDRA_DEFAULT_TOPOLOGY", dbaas.TopologyStrategy),
@@ -123,7 +118,6 @@ func (r *DbaasDeployment) Execute(ctx core.ExecutionContext) error {
 		return err
 	}
 
-	coreUtils.VaultPodSpec(&dc.Spec.Template.Spec, []string{"/usr/local/bin/entrypoint"}, spec.Spec.VaultRegistration)
 	utils.TLSClientSpecUpdate(&dc.Spec.Template.Spec, utils.RootCertPath, spec.Spec.TLS)
 
 	if tlsEnabled {

@@ -9,12 +9,11 @@ import (
 	"github.com/Netcracker/qubership-cassandra-operator/pkg/impl"
 	"github.com/Netcracker/qubership-cassandra-operator/pkg/impl/cassandra"
 	"github.com/Netcracker/qubership-cassandra-operator/pkg/impl/utils"
-	"github.com/Netcracker/qubership-cql-driver"
+	cql "github.com/Netcracker/qubership-cql-driver"
 	"github.com/Netcracker/qubership-cql-driver/mocks"
 	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/constants"
 	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/core"
 	mTypes "github.com/Netcracker/qubership-nosqldb-operator-core/pkg/types"
-	mVault "github.com/Netcracker/qubership-nosqldb-operator-core/pkg/vault"
 	"go.uber.org/zap"
 
 	"github.com/stretchr/testify/assert"
@@ -126,7 +125,6 @@ type CaseStruct struct {
 
 func GenerateDefaultCassandraTestCase(
 	t *testing.T,
-	vaultImpl mVault.VaultHelper,
 	testName string,
 	CassandraDeploymentSpec *v1alpha1.CassandraDeployment,
 	runtimeBuilder RuntimeObjectBuilder,
@@ -162,7 +160,6 @@ func GenerateDefaultCassandraTestCase(
 			constants.ContextLogger:                core.GetLogger(true),
 			"contextResourceOwner":                 CassandraDeploymentSpec, //todo hardcode replace
 			constants.ContextServiceDeploymentInfo: map[string]string{},
-			constants.ContextVault:                 vaultImpl,
 			constants.ContextHashConfigMap:         "random",
 		}),
 		ctxToReplaceAfterServiceBuilt: map[string]interface{}{
@@ -182,7 +179,6 @@ func GenerateDefaultCassandraTestCase(
 
 func GenerateDefaultCassandraWrapper(
 	t *testing.T,
-	vaultImpl mVault.VaultHelper,
 	testName string,
 	replicas int,
 	dcCount int,
@@ -259,7 +255,6 @@ partitioner: org.apache.cassandra.dht.Murmur3Partitioner`)}
 
 	return GenerateDefaultCassandraTestCase(
 		t,
-		vaultImpl,
 		testName,
 		CassandraDeployment,
 		runtimeBuilder,
@@ -273,7 +268,6 @@ func TestExecutionCheck(t *testing.T) {
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Two DCs All Services",
 				3,
 				2,
@@ -288,7 +282,6 @@ func TestExecutionCheck(t *testing.T) {
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Two DCs ",
 				3,
 				2,
@@ -324,7 +317,6 @@ func TestExecutionCheck(t *testing.T) {
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Two DCs with removed nodes",
 				3,
 				2,
@@ -367,7 +359,6 @@ func TestExecutionCheck(t *testing.T) {
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"One DC All Services One Storage",
 				3,
 				1,
@@ -386,7 +377,6 @@ func TestExecutionCheck(t *testing.T) {
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Test main storage bad mount settings",
 				3,
 				2,
@@ -411,7 +401,6 @@ func TestExecutionCheck(t *testing.T) {
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Test overlapping storage mount settings",
 				3,
 				2,
@@ -436,7 +425,6 @@ func TestExecutionCheck(t *testing.T) {
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Test empty additional storage mount settings",
 				3,
 				2,
@@ -460,7 +448,6 @@ func TestExecutionCheck(t *testing.T) {
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Test empty main storage mount settings",
 				3,
 				2,
@@ -484,7 +471,6 @@ func TestExecutionCheck(t *testing.T) {
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Check cassandra-configuration configmap updated with complex structure",
 				3,
 				1,
@@ -518,7 +504,6 @@ data_file_directories:
 		}, func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Check cassandra-configuration configmap updated",
 				3,
 				1,
@@ -550,7 +535,6 @@ data_file_directories:
 		}, func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Check configmap add new pair",
 				3,
 				1,
@@ -581,7 +565,6 @@ data_file_directories:
 		}, func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Test Cassandra Service has correct labels",
 				3,
 				1,
@@ -617,7 +600,6 @@ data_file_directories:
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Test Exact Seed list",
 				3,
 				1,
@@ -638,7 +620,6 @@ data_file_directories:
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Test Exact Seed list when One DC deploy = false",
 				3,
 				2,
@@ -662,7 +643,6 @@ data_file_directories:
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Test hostNetwork enabled",
 				3,
 				1,
@@ -765,13 +745,11 @@ data_file_directories:
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
 				t,
-				nil,
 				"Check secret read from kubernetes",
 				3,
 				1,
 			)
 			msS := cs.ctx.Get(constants.ContextSpec).(*v1alpha1.CassandraDeployment)
-			msS.Spec.VaultRegistration.Enabled = false
 			cs.ctx.Set(constants.ContextSpec, msS)
 			cs.executor.SetExecutable(cs.builder.Build(cs.ctx))
 			cs.ReadResultFunc = func(t *testing.T, err error) {

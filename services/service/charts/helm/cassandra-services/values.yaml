@@ -156,7 +156,6 @@ dbaas:
     username: cluster-dba
     password: Bnmq5567_PO
     secretName: dbaas-aggregator-credentials
-    vaultPasswordPath:
     dbaasAggregatorRegistrationAddress: "http://dbaas-aggregator.dbaas:8080"
 
   # Key-value node labels.
@@ -270,23 +269,6 @@ monitoringAgent:
   flushInterval: 20s
   flushJitter: 5s
   jolokiaDebug: "false"
-
-vaultRegistration:
-  tokenSecretName: vault-secret-services
-  dockerImage: banzaicloud/vault-env:1.19.0
-  enabled: false
-  path: kv
-  url:
-  role: cassandra-role
-  method: kubernetes
-  rotationPeriod: 86400
-  initContainerResources:
-    requests:
-      cpu: 10m
-      memory: 32Mi
-    limits:
-      cpu: 20m
-      memory: 64Mi
 
 robotTests:
   install: false

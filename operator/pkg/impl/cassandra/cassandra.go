@@ -2,7 +2,6 @@ package cassandra
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 
 	"github.com/Netcracker/qubership-cassandra-operator/api/v1alpha1"
@@ -33,7 +32,6 @@ type CassandraBuilder struct {
 
 func (r *CassandraBuilder) Build(ctx core.ExecutionContext) core.Executable {
 	spec := ctx.Get(constants.ContextSpec).(*v1alpha1.CassandraDeployment)
-	request := ctx.Get(constants.ContextRequest).(reconcile.Request)
 	log := ctx.Get(constants.ContextLogger).(*zap.Logger)
 	pvcSelector := map[string]string{
 		utils.Service: utils.CassandraCluster,
@@ -141,70 +139,10 @@ func (r *CassandraBuilder) Build(ctx core.ExecutionContext) core.Executable {
 
 	cassandra.AddStep(&CassandraStatefulSetStep{})
 
-	if spec.Spec.VaultRegistration.Enabled && spec.Spec.Reaper.Install {
-		cassandra.AddStep(&steps.MoveSecretToVault{
-			SecretName:        spec.Spec.Reaper.SecretName,
-			PolicyName:        utils.Reaper,
-			Policy:            fmt.Sprintf("length = 10\nrule \"charset\" {\n  charset = \"%s\"\n}\n", utils.Charset),
-			VaultRegistration: &spec.Spec.VaultRegistration,
-		})
-	}
-
-	if spec.Spec.VaultRegistration.Enabled && spec.Spec.VaultDBEngine.Enabled {
-
-		var certificate []byte
-		var err error
-		configMap := map[string]interface{}{
-			"plugin_name":      spec.Spec.VaultDBEngine.PluginName,
-			"hosts":            fmt.Sprintf("%s.%s.svc", utils.Cassandra, request.Namespace),
-			"protocol_version": spec.Spec.VaultDBEngine.ProtocolVersion,
-			"username":         "vault-admin",
-			"password":         func() string { return "vault-admin" },
-			"allowed_roles":    spec.Spec.VaultDBEngine.AllowedRoles,
-			"connect_timeout":  spec.Spec.VaultDBEngine.ConnectTimeout,
-			"tls":              spec.Spec.TLS.Enabled,
-			"insecure_tls":     spec.Spec.TLS.Enabled,
-		}
-		if spec.Spec.TLS.Enabled {
-			certificate, err = os.ReadFile(utils.RootCertPath + spec.Spec.TLS.RootCAFileName)
-			core.PanicError(err, log.Error, fmt.Sprintf("Failed to read Certificate file %s", utils.RootCertPath+spec.Spec.TLS.RootCAFileName))
-			configMap["pem_bundle"] = string(certificate)
-		}
-
-		cassandra.AddStep(&CreateSuperUser{
-			Username: "vault-admin",
-			Password: func() string { return "vault-admin" },
-		})
-
-		cassandra.AddStep(&CreateSuperUser{
-			Username: spec.Spec.User,
-			Password: func() string { return "admin" },
-		})
-
-		dbEngineStep := steps.NewCreateDBEngine(
-			spec.Spec.VaultDBEngine.Name,
-			configMap,
-			spec.Spec.VaultDBEngine.Role,
-			"/database/static-roles/",
-			map[string]interface{}{
-				"db_name":             spec.Spec.VaultDBEngine.Name,
-				"username":            spec.Spec.User,
-				"rotation_statements": "ALTER ROLE '{{username}}' with PASSWORD = '{{password}}';",
-				"rotation_period":     "175200h", //TODO make a variable
-			})
-		dbEngineStep.ConditionFunc = func() (bool, error) { return true, nil }
-		cassandra.AddStep(dbEngineStep)
-		cassandra.AddStep(&steps.SetPasswordFromVaultRole{
-			Registration:          spec.Spec.VaultRegistration,
-			RoleName:              spec.Spec.VaultDBEngine.Role,
-			CtxVarToStorePassword: utils.ContextPasswordKey,
-		})
-	} else {
-		cassandra.AddStep(&CreateSuperUser{
-			Username: spec.Spec.User,
-			Password: func() string { return ctx.Get(utils.ContextPasswordKey).(string) },
-		})
-	}
+	cassandra.AddStep(&CreateSuperUser{
+		Username: spec.Spec.User,
+		Password: func() string { return ctx.Get(utils.ContextPasswordKey).(string) },
+	})
 
 	cassandra.AddStep(&UpdateCassandraCredentials{})
 

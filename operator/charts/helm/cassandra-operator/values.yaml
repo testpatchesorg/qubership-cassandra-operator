@@ -239,31 +239,6 @@ cassandra:
 
   cassandra_env: |-
 
-vaultRegistration:
-  tokenSecretName: vault-secret
-  dockerImage: banzaicloud/vault-env:1.19.0
-  enabled: false
-  path: kv
-  url:
-  role: cassandra-role
-  method: kubernetes
-  rotationPeriod: 86400
-  initContainerResources:
-    requests:
-      cpu: 10m
-      memory: 32Mi
-    limits:
-      cpu: 20m
-      memory: 64Mi
-
-vaultDBEngine:
-  name: cassandra-db-engine
-  enabled: false
-  pluginName: cassandra-database-plugin
-  protocolVersion: 4
-  allowedRoles: nc*
-  connectTimeout: 10s
-
 SERVICE_NAME: "cassandra"
 PART_OF: "CASSANDRA"
 DELIMITER: "-"

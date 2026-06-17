@@ -12,11 +12,8 @@ import (
 	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/constants"
 	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/core"
 	mTypes "github.com/Netcracker/qubership-nosqldb-operator-core/pkg/types"
-	mVault "github.com/Netcracker/qubership-nosqldb-operator-core/pkg/vault"
-	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/vault/mocks"
 	"go.uber.org/zap"
 
-	"github.com/hashicorp/vault/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	v1app "k8s.io/api/apps/v1"
@@ -30,30 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-type FakeVaultImpl struct {
-	t        *testing.T
-	password string
-}
-
-func (r *FakeVaultImpl) GetClient() *api.Client {
-	return nil
-}
-
-func (r *FakeVaultImpl) VaultGeneratePasswordWithPolicy(policyName string, client *api.Client) (string, error) {
-	return r.password, nil
-}
-
-func (r *FakeVaultImpl) VaultCreatePasswordPolicy(policyName string, policy string, client *api.Client) error {
-	return nil
-}
-func (r *FakeVaultImpl) VaultRead(path string, client *api.Client) (map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (r *FakeVaultImpl) VaultWrite(path string, secret map[string]interface{}, client *api.Client) error {
-	return nil
-}
 
 type TestUtilsImpl struct {
 	core.DefaultKubernetesHelperImpl
@@ -264,9 +237,6 @@ func GenerateDefaultCassandra(namespace string, cassandraDCs []*v1.DataCenter, b
 					"run-robot",
 				},
 			},
-			VaultRegistration: mTypes.VaultRegistration{
-				InitContainerResources: rr,
-			},
 		},
 	}
 }
@@ -284,7 +254,6 @@ type CaseStruct struct {
 }
 
 func GenerateDefaultCassandraTestCase(
-	vaultImpl mVault.VaultHelper,
 	testName string,
 	cassandraSupplService *v1.CassandraSupplService,
 	runtimeObjects []runtime.Object,
@@ -327,7 +296,6 @@ func GenerateDefaultCassandraTestCase(
 			constants.ContextLogger:                core.GetLogger(true),
 			"contextResourceOwner":                 cassandraSupplService, //todo hardcode replace
 			constants.ContextServiceDeploymentInfo: map[string]string{},
-			constants.ContextVault:                 vaultImpl,
 			constants.ContextHashConfigMap:         "random",
 			utils.ContextClusterBuilder:            clusterBuilder,
 		}),
@@ -359,7 +327,6 @@ func configConfigMap(namespace string) []runtime.Object {
 }
 
 func GenerateDefaultCassandraWrapper(
-	vaultImpl mVault.VaultHelper,
 	testName string,
 	replicas int,
 	dcCount int,
@@ -398,7 +365,6 @@ func GenerateDefaultCassandraWrapper(
 	)
 
 	return GenerateDefaultCassandraTestCase(
-		vaultImpl,
 		testName,
 		cassandraService,
 		runtimeObjects,
@@ -411,7 +377,6 @@ func TestExecutionCheck(t *testing.T) {
 	testFuncs := []func() CaseStruct{
 		func() CaseStruct {
 			cs := GenerateDefaultCassandraWrapper(
-				nil,
 				"Two DCs All Services",
 				3,
 				2,
@@ -423,28 +388,25 @@ func TestExecutionCheck(t *testing.T) {
 			return cs
 		},
 		func() CaseStruct {
-			vaultImpl := &mocks.FakeVaultHelper{}
-			vaultImpl.On("CheckSecretExists", mock.Anything).Return(false, make(map[string]interface{}), nil)
-			vaultImpl.On("GeneratePassword", mock.Anything).Return(mock.Anything, nil)
-			vaultImpl.On("StorePassword", mock.Anything, mock.Anything).Return(nil)
-			vaultImpl.On("IsDatabaseConfigExist", mock.Anything).Return(false, nil)
-			vaultImpl.On("CreateDatabaseConfig", mock.Anything, mock.Anything).Return(nil)
-			vaultImpl.On("CreateStaticRole", mock.Anything, mock.Anything).Return(nil)
-			vaultImpl.On("IsStaticRoleExists", mock.Anything).Return(true, nil)
-			vaultImpl.On("IsStaticRoleExists", mock.Anything).Return(true, nil)
-			vaultImpl.On("ResolvePassword", mock.Anything).Return("12345", nil)
-			roleMap := map[string]interface{}{"password": "12345"}
+			// vaultImpl := &mocks.FakeVaultHelper{}
+			// vaultImpl.On("CheckSecretExists", mock.Anything).Return(false, make(map[string]interface{}), nil)
+			// vaultImpl.On("GeneratePassword", mock.Anything).Return(mock.Anything, nil)
+			// vaultImpl.On("StorePassword", mock.Anything, mock.Anything).Return(nil)
+			// vaultImpl.On("IsDatabaseConfigExist", mock.Anything).Return(false, nil)
+			// vaultImpl.On("CreateDatabaseConfig", mock.Anything, mock.Anything).Return(nil)
+			// vaultImpl.On("CreateStaticRole", mock.Anything, mock.Anything).Return(nil)
+			// vaultImpl.On("IsStaticRoleExists", mock.Anything).Return(true, nil)
+			// vaultImpl.On("IsStaticRoleExists", mock.Anything).Return(true, nil)
+			// vaultImpl.On("ResolvePassword", mock.Anything).Return("12345", nil)
+			// roleMap := map[string]interface{}{"password": "12345"}
 
-			vaultImpl.On("GetStaticRoleCredentials", mock.Anything).Return(roleMap, nil).Times(2)
+			// vaultImpl.On("GetStaticRoleCredentials", mock.Anything).Return(roleMap, nil).Times(2)
 			cs := GenerateDefaultCassandraWrapper(
-				vaultImpl,
 				"Test PodSpec update with Vault init container",
 				3,
 				1,
 			)
 			msS := cs.ctx.Get(constants.ContextSpec).(*v1.CassandraSupplService)
-			msS.Spec.VaultRegistration.Enabled = true
-			msS.Spec.VaultRegistration.Path = "secret"
 			msS.Spec.Monitoring.Install = true
 			msS.Spec.Monitoring.MetricCollector = "influxDB"
 			msS.Spec.Dbaas.Install = true

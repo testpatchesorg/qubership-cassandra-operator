@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Netcracker/qubership-cql-driver"
 	"github.com/Netcracker/qubership-cassandra-supplementary/api/v1alpha1"
 	"github.com/Netcracker/qubership-cassandra-supplementary/pkg/utils"
+	cql "github.com/Netcracker/qubership-cql-driver"
 
 	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/constants"
 	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/core"
-	"github.com/Netcracker/qubership-nosqldb-operator-core/pkg/vault"
 	"github.com/gocql/gocql"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -53,15 +52,6 @@ func (r *BackupSSHKeyStep) Execute(ctx core.ExecutionContext) error {
 	var replication string = strings.Join(dcToReplicasReplication[:], ",")
 
 	pass := string(secret.Data[utils.Password])
-	var vaultErr error
-	if spec.Spec.VaultRegistration.Enabled {
-		vaultHelper := ctx.Get(constants.ContextVault).(vault.VaultHelper)
-		pass, vaultErr = vaultHelper.ResolvePassword(pass)
-		if vaultErr != nil {
-			return vaultErr
-		}
-	}
-
 	cluster := clusterBuilder.WithHost(core.OptionalString(spec.Spec.Cassandra.Host, fmt.Sprintf("%s.%s", utils.Cassandra, request.Namespace))).
 		WithUser(string(secret.Data[utils.Username])).
 		WithPassword(func() string { return pass }).

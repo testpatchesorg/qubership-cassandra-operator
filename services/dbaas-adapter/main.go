@@ -87,21 +87,6 @@ func main() {
 			48, []string{"-"})
 	}
 
-	// Vault
-	isVaultEnabled := utils.GetEnvAsBool("VAULT_ENABLED", false)
-	var vaultClient *utils.VaultClient
-	if isVaultEnabled {
-		vaultConfig := utils.VaultConfig{
-			IsVaultEnabled:  isVaultEnabled,
-			Address:         utils.GetEnv("VAULT_ADDR", ""),
-			VaultRole:       utils.GetEnv("VAULT_ROLE", "cassandra-sa"),
-			VaultRotPeriod:  utils.GetEnv("VAULT_ROTATION_PERIOD", "86400"),
-			VaultAuthMethod: utils.GetEnv("VAULT_AUTH_METHOD", ""),
-			VaultDBName:     utils.GetEnv("VAULT_DB_ENGINE_NAME", "cassandra"),
-		}
-		vaultClient = utils.NewVaultClient(vaultConfig)
-	}
-
 	// Supports
 	supports := dao.SupportsBase{
 		Users:             true,
@@ -109,7 +94,6 @@ func main() {
 		DescribeDatabases: false,
 		AdditionalKeys: dao.Supports{
 			"backupRestore": backupAdminServiceImpl != nil,
-			"vault":         isVaultEnabled,
 		},
 	}
 
@@ -155,8 +139,8 @@ func main() {
 		port,
 		dbAdminImpl,
 		logger,
-		isVaultEnabled,
-		vaultClient,
+		false,
+		&utils.VaultClient{},
 		"",
 	)
 

@@ -173,7 +173,6 @@ func (r *LegacyBackupDeployment) Execute(ctx core.ExecutionContext) error {
 		)
 	}
 
-	coreUtils.VaultPodSpec(&dc.Spec.Template.Spec, utils.BackupEntrypoint, spec.Spec.VaultRegistration)
 	utils.TLSClientSpecUpdate(&dc.Spec.Template.Spec, utils.RootCertPath, spec.Spec.TLS)
 	utils.TLSServerSpecUpdate(&dc.Spec.Template.Spec, spec.Spec.TLS, spec.Spec.Backup.TLS.BackupDaemonCASecretName, utils.ServerCertsPath)
 

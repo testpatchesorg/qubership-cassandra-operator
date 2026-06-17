@@ -61,7 +61,6 @@ type CassandraServiceSpec struct {
 	Dbaas                      `json:"dbaas"`
 	Monitoring                 `json:"monitoringAgent"`
 	RobotTests                 `json:"robotTests"`
-	VaultRegistration          types.VaultRegistration                    `json:"vaultRegistration" common:"true"`
 	ServiceAccountName         string                                     `json:"serviceAccountName"`
 	IpV6                       bool                                       `json:"ipV6,omitempty"`
 	StopOnFailedResourceUpdate bool                                       `json:"stopOnFailedResourceUpdate,omitempty"`

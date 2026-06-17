@@ -54,9 +54,6 @@ func GenerateDefaultCassandra(cassandraDCs []*v1alpha1.DataCenter) *v1alpha1.Cas
 				Resources:        rr,
 				DeploymentSchema: &v1alpha1.DeploymentSchema{DataCenters: cassandraDCs},
 			},
-			VaultRegistration: mTypes.VaultRegistration{
-				InitContainerResources: rr,
-			},
 		},
 	}
 }

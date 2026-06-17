@@ -136,14 +136,6 @@ func (r *RobotDeployment) Execute(ctx core.ExecutionContext) error {
 		return err
 	}
 
-	robotArgs := append(utils.RobotEntrypoint, spec.Spec.Args...)
-
-	coreUtils.VaultPodSpec(
-		&dc.Spec.Template.Spec,
-		robotArgs,
-		spec.Spec.VaultRegistration,
-	)
-
 	utils.TLSClientSpecUpdate(
 		&dc.Spec.Template.Spec,
 		utils.RootCertPath,

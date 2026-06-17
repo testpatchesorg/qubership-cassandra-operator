@@ -63,40 +63,35 @@ Create the name of the serviceList account to use
 {{- end -}}
 
 {{/*
-[NoSQL Operator Core] Vault secret template
+[NoSQL Operator Core] secret template
 Arguments:
 Dictionary with:
-1. "vlt" - .vaultRegistration section
-2. "secret" section includes next elements:
+1. "secret" section includes next elements:
     .secretName (required)
     .password (required)
     .username (optional)
-    .vaultPasswordPath (optional)
 3. "isInternal" is a required boolean parameter
 Usage example:
-{{template "nosql.core.secret.vault" (dict "vltEnabled" .Values.vaultRegistration "vltPath" "kv_path" "secret" .Values.cassandra )}}
+{{template "nosql.core.secret" ("secret" .Values.cassandra )}}
 */}}
-{{- define "nosql.core.secret.vault" -}}
+{{- define "nosql.core.secret" -}}
 {{ $_ := set . "userEnv" "" }}
 {{ $_ := set . "userPass" "" }}
-{{include "nosql.core.secret.vault.fromEnv" $_ }}
+{{include "nosql.core.secret.fromEnv" $_ }}
 {{- end -}}
 
 {{/*
-[NoSQL Operator Core] Vault secret template
+[NoSQL Operator Core] secret template
 Arguments:
 Dictionary with:
-1. "vlt" - .vaultRegistration section
-2. "secret" section includes next elements:
+1. "secret" section includes next elements:
     .secretName (required)
     .password (required)
     .username (optional)
-    .vaultPasswordPath (optional)
-3. "isInternal" is a required boolean parameter
 Usage example:
-{{template "nosql.core.secret.vault.fromEnv" (dict "vltEnabled" .Values.vaultRegistration "vltPath" "kv_path" "secret" .Values.cassandra "userEnv" .Values.INFRA_CASSANDRA_USERNAME "passEnv" .Values.INFRA_CASSANDRA_PASSWORD )}}
+{{template "nosql.core.secret.fromEnv" (dict "secret" .Values.cassandra "userEnv" .Values.INFRA_CASSANDRA_USERNAME "passEnv" .Values.INFRA_CASSANDRA_PASSWORD )}}
 */}}
-{{- define "nosql.core.secret.vault.fromEnv" -}}
+{{- define "nosql.core.secret.fromEnv" -}}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -107,19 +102,7 @@ metadata:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation
 stringData:
-  {{- if .vltEnabled }}
-    {{- if .secret.vaultPasswordPath }}
-  password: {{ .secret.vaultPasswordPath | quote }}
-    {{- else }}
-        {{- if (.isInternal) }}
-  password: 'vault:{{ .vltPath }}'
-        {{- else }}
   password: {{ include "fromEnv" (dict "envName" .passEnv "default" .secret.password) | quote }}
-        {{- end }}
-    {{- end }}
-  {{- else }}
-  password: {{ include "fromEnv" (dict "envName" .passEnv "default" .secret.password) | quote }}
-  {{- end }}
   {{- if .secret.username }}
   username: {{ include "fromEnv" (dict "envName" .userEnv "default" .secret.username) | quote }} 
   {{- end }}
@@ -128,18 +111,18 @@ type: Opaque
 
 {{/*
 [NoSQL Operator Core] Internal secret template
-{{template "nosql.core.secret.internal" (dict "vlt" .Values.vaultRegistration "secret" .Values.redis)}}
+{{template "nosql.core.secret.internal" (dict "secret" .Values.redis)}}
 */}}
 {{- define "nosql.core.secret.internal" -}}
-{{include "nosql.core.secret.vault" (set . "isInternal" true)}}
+{{include "nosql.core.secret" .}}
 {{- end -}}
 
 {{/*
 [NoSQL Operator Core] External secret template
-{{template "nosql.core.secret.external" (dict "vlt" .Values.vaultRegistration "secret" .Values.redis)}}
+{{template "nosql.core.secret.external" (dict "secret" .Values.redis)}}
 */}}
 {{- define "nosql.core.secret.external" -}}
-{{ include "nosql.core.secret.vault" (set . "isInternal" false) }}
+{{ include "nosql.core.secret" . }}
 {{- end -}}
 
 {{/*
@@ -218,7 +201,6 @@ Dictionary with:
 Dictionary with:
 1. "envName" - name of env var to get value from
 2.  "default" - default value from values.yaml
-{{template "fromEnv" (dict "envName" ".Values.VAULT_ADDR" "default" .Values.vaultRegistration.token) }}
 */}}
 {{- define "fromEnv" -}}
   {{- $envValue := .envName -}}
@@ -253,7 +235,6 @@ Uses value from values.yaml if defined, otherwise value from environment variabl
 Dictionary with:
 1. "envName" - name of env var to get value from
 2.  "default" - default value from values.yaml
-{{template "ifEnvThenDefault" (dict "envName" .Values.VAULT_ADDR "then" (printf %s_%s .Values.VAULT_ADDR "const" ) "default" .Values.vaultRegistration.token) }}
 */}}
 {{- define "ifEnvThenDefault" -}}
   {{- $value := .default -}}

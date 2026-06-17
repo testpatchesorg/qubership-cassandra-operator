@@ -86,15 +86,6 @@ func (r *BackupBuilder) Build(ctx core.ExecutionContext) core.Executable {
 
 	backup.AddStep(&BackupService{})
 
-	if spec.Spec.VaultRegistration.Enabled {
-		backup.AddStep(&steps.MoveSecretToVault{
-			SecretName:        spec.Spec.Backup.SecretName,
-			PolicyName:        utils.Backup,
-			Policy:            fmt.Sprintf("length = 10\nrule \"charset\" {\n  charset = \"%s\"\n}\n", utils.Charset),
-			VaultRegistration: &spec.Spec.VaultRegistration,
-		})
-	}
-
 	if !spec.Spec.AWSKeyspaces.Install {
 		backup.AddStep(&BackupSSHKeyStep{})
 	}
